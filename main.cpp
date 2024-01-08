@@ -104,6 +104,14 @@ void printMap()
     }
 }
 
+// In tất cả tên map
+void printMapName(){
+    cout << "Available maps:\n";
+    for (int i = 0; i < mapList.size(); i++) {
+        cout << i + 1 << ". " << mapList[i].getIndex() << endl;
+    }
+}
+
 //Function 1:
 // Sử dụng 'w', 'a', 's', 'd' để di chuyển
 // Nhấn 'e' để thoát
@@ -328,9 +336,10 @@ void printSets( const unordered_set<string>& hSet, const unordered_set<string>& 
         cout << " T set has the maximum spots: " <<maxSize<< endl;
     }
 };
-void findPath(){
+void function2(){
     //                 Hỏi người dùng muốn bắt đầu từ Map nào
     string mapfirstIndex, maplastIndex;
+    printMapName();
     cout << "Please enter your start map you want to find path: ";
     cin >> mapfirstIndex;
     cout << endl;
@@ -479,14 +488,6 @@ bool isPositionValid(int x, int y, int z, vector<Object> objList) {
     return true;
 }
 
-// In tất cả tên map
-void printMapName(){
-    cout << "Available maps:\n";
-    for (int i = 0; i < mapList.size(); i++) {
-        cout << i + 1 << ". " << mapList[i].getIndex() << endl;
-    }
-}
-
 // Thêm 1 object
 void addObjectInMap(int mapIndex) {
     mapIndex--; // Chỉ số mảng bắt đầu từ 0
@@ -543,9 +544,9 @@ void removeObjectInMap(int mapIndex) {
     mapList[mapIndex].printAllObjects();
 
     do{
-        cout << "Select an object (1 - " << mapList[mapIndex].getTotalObj() << "): ";
+        cout << "Select an object (1 - " << mapList[mapIndex].getObjTotal() << "): ";
         cin >> objectIndex;
-    } while (objectIndex < 1 || objectIndex > mapList[mapIndex].getTotalObj());
+    } while (objectIndex < 1 || objectIndex > mapList[mapIndex].getObjTotal());
     objectIndex--;
     vector<Object> objList;
     objList = mapList[mapIndex].getList();
@@ -815,20 +816,38 @@ int main() {
         cin.ignore();
         if (choice == 0) {
             printMap();
-        } else if (choice == 1) {
-            play();
-        } else if (choice == 2) {
+        }
 
-            findPath();
-        } else if (choice == 3) {
+        else if (choice == 1)
+        {
+            play();
+        }
+
+
+
+        else if (choice == 2) {
+
+            function2();
+        }
+        else if (choice == 3)
+        {
             createMap();
-        } else if (choice == 4) {
+        }
+
+        else if (choice == 4)
+        {
             changeMap();
-        } else if (choice == 5) {
+        }
+
+        else if (choice == 5)
+        {
             checkValid();
-        } else if (choice == 6) {
+        }
+
+        else if (choice == 6)
+        {
             cout << "ENDING PROGRAM!" << endl;
-            saveToFile("map.txt", mapList);
+            saveToFile("map.txt",mapList);
             break;
         }
     }
