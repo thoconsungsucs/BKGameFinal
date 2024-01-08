@@ -544,9 +544,9 @@ void removeObjectInMap(int mapIndex) {
     mapList[mapIndex].printAllObjects();
 
     do{
-        cout << "Select an object (1 - " << mapList[mapIndex].getObjTotal() << "): ";
+        cout << "Select an object (1 - " << mapList[mapIndex].getTotalObj() << "): ";
         cin >> objectIndex;
-    } while (objectIndex < 1 || objectIndex > mapList[mapIndex].getObjTotal());
+    } while (objectIndex < 1 || objectIndex > mapList[mapIndex].getTotalObj());
     objectIndex--;
     vector<Object> objList;
     objList = mapList[mapIndex].getList();
