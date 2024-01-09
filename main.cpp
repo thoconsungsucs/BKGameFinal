@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <unordered_set>
 #include <algorithm>
+
 using namespace std;
 namespace fs = std::filesystem;
 struct Position {
@@ -17,8 +18,29 @@ struct Position {
     int y;
 };
 
-vector<Map> mapList;
+bool readFile(const string &filename);
+void printMatrix(string matrix[10][10]);
+void printMap();
+void printMapName();
+void play();
+bool isValidMove(int x, int y, const vector<vector<int>> &matrix, const vector<vector<bool>> &visited);
+vector<Position> findPath(const vector<vector<int>> &matrix);
+void printPathMatrix(const string (*matrix)[10], const vector<Position> &path);
+void countObject(const string (*matrix)[10], const vector<Position> &path, unordered_set<string> &hSet,
+                 unordered_set<string> &cSet, unordered_set<string> &tSet);
+void printSets(const unordered_set<string> &hSet, const unordered_set<string> &cSet, const unordered_set<string> &tSet);
+void findPath();
+void saveNewObject(Object newObject);
+void createMap();
+bool isPositionValid(int x, int y, int z, vector<Object> objList);
+void addObjectInMap(int mapIndex);
+void removeObjectInMap(int mapIndex);
+void checkValid();
+void removeMap(int mapIndex);
+void changeMap();
+void saveToFile(const string &filename, vector<Map> &mapList);
 
+vector<Map> mapList;
 // Đọc file
 bool readFile(const string &filename) {
     string line, nameMap, objID, objName, modelName;
@@ -97,15 +119,14 @@ void printMatrix(string matrix[10][10]) {
     cout << endl;
 }
 
-void printMap()
-{
+void printMap() {
     for (int i = 0; i < mapList.size(); i++) {
         mapList[i].printMatrix();
     }
 }
 
 // In tất cả tên map
-void printMapName(){
+void printMapName() {
     cout << "Available maps:\n";
     for (int i = 0; i < mapList.size(); i++) {
         cout << i + 1 << ". " << mapList[i].getIndex() << endl;
@@ -152,25 +173,33 @@ void play() {
         cin >> move;
         switch (move) {
             case 'w':
-                if (curX == 0 || (matrix[curX - 1][curY] != "0" && matrix[curX - 1][curY].substr(0, 4) != "GOTO")) continue;
+                if (curX == 0 ||
+                    (matrix[curX - 1][curY] != "0" && matrix[curX - 1][curY].substr(0, 4) != "GOTO"))
+                    continue;
                 matrix[curX][curY] = "0";
                 matrix[curX - 1][curY] = "NV";
                 curX--;
                 break;
             case 'a':
-                if (curY == 0 || (matrix[curX][curY - 1] != "0" && matrix[curX][curY - 1].substr(0, 4) != "GOTO")) continue;
+                if (curY == 0 ||
+                    (matrix[curX][curY - 1] != "0" && matrix[curX][curY - 1].substr(0, 4) != "GOTO"))
+                    continue;
                 matrix[curX][curY] = "0";
                 matrix[curX][curY - 1] = "NV";
                 curY--;
                 break;
             case 's':
-                if (curX == 9 || (matrix[curX + 1][curY] != "0" && matrix[curX + 1][curY].substr(0, 4) != "GOTO")) continue;
+                if (curX == 9 ||
+                    (matrix[curX + 1][curY] != "0" && matrix[curX + 1][curY].substr(0, 4) != "GOTO"))
+                    continue;
                 matrix[curX][curY] = "0";
                 matrix[curX + 1][curY] = "NV";
                 curX++;
                 break;
             case 'd':
-                if (curY == 9 || (matrix[curX][curY + 1] != "0" && matrix[curX][curY + 1].substr(0, 4) != "GOTO")) continue;
+                if (curY == 9 ||
+                    (matrix[curX][curY + 1] != "0" && matrix[curX][curY + 1].substr(0, 4) != "GOTO"))
+                    continue;
                 matrix[curX][curY] = "0";
                 matrix[curX][curY + 1] = "NV";
                 curY++;
@@ -184,12 +213,12 @@ void play() {
 
 
 // Function 2: Find patch
-bool isValidMove(int x, int y, const vector<vector<int>>& matrix, const vector<vector<bool>>& visited) {
+bool isValidMove(int x, int y, const vector<vector<int>> &matrix, const vector<vector<bool>> &visited) {
     return x >= 0 && x < matrix.size() && y >= 0 && y < matrix[0].size() && matrix[x][y] == 0 && !visited[x][y];
 }
 
 // Tìm đường đi từ điểm xuất phát đến điểm đích
-vector<Position> findPath(const vector<vector<int>>& matrix) {
+vector<Position> findPath(const vector<vector<int>> &matrix) {
     int rows = matrix.size();
     int cols = matrix[0].size();
 
@@ -201,7 +230,10 @@ vector<Position> findPath(const vector<vector<int>>& matrix) {
     vector<vector<bool>> visited(rows, vector<bool>(cols, false));
 
     // Hướng di chuyển ban đầu
-    vector<Position> directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+    vector<Position> directions = {{0,  1},
+                                   {1,  0},
+                                   {0,  -1},
+                                   {-1, 0}};
 
     // Lưu trữ kết quả
     vector<Position> path;
@@ -212,7 +244,7 @@ vector<Position> findPath(const vector<vector<int>>& matrix) {
     while (current.x != end.x || current.y != end.y) {
         bool foundMove = false;
 
-        for (const auto& direction : directions) {
+        for (const auto &direction: directions) {
             int new_x = current.x + direction.x;
             int new_y = current.y + direction.y;
 
@@ -240,12 +272,12 @@ vector<Position> findPath(const vector<vector<int>>& matrix) {
     return path;
 }
 
-void printpathMatrix(const string (*matrix)[10], const vector<Position>& path) {
+void printPathMatrix(const string (*matrix)[10], const vector<Position> &path) {
 
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
             bool isPath = false;
-            for (const auto& pos : path) {
+            for (const auto &pos: path) {
                 if (pos.x == i && pos.y == j) {
                     isPath = true;
                     break;
@@ -269,8 +301,10 @@ void printpathMatrix(const string (*matrix)[10], const vector<Position>& path) {
     }
     cout << endl;
 }
-void countObject(const string (*matrix)[10], const vector<Position>& path, unordered_set<string>& hSet, unordered_set<string>& cSet, unordered_set<string>& tSet) {
-    for (const auto& pos : path) {
+
+void countObject(const string (*matrix)[10], const vector<Position> &path, unordered_set<string> &hSet,
+                 unordered_set<string> &cSet, unordered_set<string> &tSet) {
+    for (const auto &pos: path) {
         int x = pos.x;
         int y = pos.y;
 
@@ -286,11 +320,12 @@ void countObject(const string (*matrix)[10], const vector<Position>& path, unord
                     // Handle objects with brackets
                     if (symbol[0] == '[') {
                         symbol = symbol.substr(1, symbol.size() - 2);
-                    }if (symbol[0] == 'H') {
+                    }
+                    if (symbol[0] == 'H') {
                         hSet.insert(symbol);
                     } else if (symbol[0] == 'C') {
                         cSet.insert(symbol);
-                    }else if (symbol[0] == 'T') {
+                    } else if (symbol[0] == 'T') {
                         tSet.insert(symbol);
                     }
                 }
@@ -299,7 +334,7 @@ void countObject(const string (*matrix)[10], const vector<Position>& path, unord
     }
 }
 
-void printSets( const unordered_set<string>& hSet, const unordered_set<string>& cSet, const unordered_set<string>& tSet ) {
+void printSets(const unordered_set<string> &hSet, const unordered_set<string> &cSet, const unordered_set<string> &tSet) {
 
     if (!hSet.empty()) {
         cout << "Objects in H set:" << endl;
@@ -308,7 +343,7 @@ void printSets( const unordered_set<string>& hSet, const unordered_set<string>& 
         }
     }
     cout << endl;
-    if(!cSet.empty()) {
+    if (!cSet.empty()) {
         cout << "Objects in C set:" << endl;
         for (const auto &symbol: cSet) {
             cout << symbol << " ";
@@ -323,20 +358,21 @@ void printSets( const unordered_set<string>& hSet, const unordered_set<string>& 
         }
     }
     cout << endl;
-    size_t maxSize = max({ hSet.size(), cSet.size(),tSet.size()});
-    if (maxSize==0){
-        cout << "There is no object visible "<<endl;
+    size_t maxSize = max({hSet.size(), cSet.size(), tSet.size()});
+    if (maxSize == 0) {
+        cout << "There is no object visible " << endl;
 
 
     } else if (maxSize == hSet.size() && maxSize != 0) {
-        cout << " H has the maximum spots: " <<maxSize<< endl;
+        cout << " H has the maximum spots: " << maxSize << endl;
     } else if (maxSize == cSet.size() && maxSize != 0) {
-        cout << " C set has the maximum spots: " <<maxSize<< endl;
+        cout << " C set has the maximum spots: " << maxSize << endl;
     } else if (maxSize == tSet.size() && maxSize != 0) {
-        cout << " T set has the maximum spots: " <<maxSize<< endl;
+        cout << " T set has the maximum spots: " << maxSize << endl;
     }
 };
-void function2(){
+
+void findPath() {
     //                 Hỏi người dùng muốn bắt đầu từ Map nào
     string mapfirstIndex, maplastIndex;
     printMapName();
@@ -361,9 +397,9 @@ void function2(){
     }
 
 
-    for (int t = firstIndex ; t < lastIndex+1; t++ ) {
+    for (int t = firstIndex; t < lastIndex + 1; t++) {
         // Khởi tạo vector
-        cout <<"MAP"<< mapList[t].getIndex()<<endl;
+        cout << "MAP" << mapList[t].getIndex() << endl;
         vector<vector<int>> inputMatrix3;
         unordered_set<string> gSet, hSet, cSet, tSet;
         for (int i = 0; i < 10; i++) {
@@ -382,12 +418,12 @@ void function2(){
         // mapList[2].printMatrix();
 
         vector<Position> path = findPath(inputMatrix3);
-        countObject(mapList[t].getMatrix(), path, hSet, cSet,tSet);
+        countObject(mapList[t].getMatrix(), path, hSet, cSet, tSet);
         // Print the results
 
         cout << endl;
-        printpathMatrix(mapList[t].getMatrix(), path);
-        printSets( hSet, cSet, tSet);
+        printPathMatrix(mapList[t].getMatrix(), path);
+        printSets(hSet, cSet, tSet);
 
     }
 
@@ -400,8 +436,8 @@ void saveNewObject(Object newObject) {
     string fileName = newObject.getName();
     string fullPath = folderPath + fileName + ".obj";
     ofstream file(fullPath);
-    if(file.is_open()) {
-        file << newObject.getName()<< "\n";
+    if (file.is_open()) {
+        file << newObject.getName() << "\n";
         file << 100;
     }
 }
@@ -481,7 +517,8 @@ bool isPositionValid(int x, int y, int z, vector<Object> objList) {
     if (x < 0 || x >= 10 || y < 0 || y >= 10 || z < 0 || z >= 10) return false;
 
     for (int i = 0; i < objList.size(); i++) {
-        if (objList[i].getPosX() == to_string(x) && objList[i].getPosY() == to_string(y) && objList[i].getPosZ() == to_string(z)) {
+        if (objList[i].getPosX() == to_string(x) && objList[i].getPosY() == to_string(y) &&
+            objList[i].getPosZ() == to_string(z)) {
             return false;
         }
     }
@@ -506,7 +543,7 @@ void addObjectInMap(int mapIndex) {
         cout << "Enter the new Z position: ";
         cin >> posZ;
 
-        if (!isPositionValid(stoi(posX),stoi(posY),stoi(posZ),mapList[mapIndex].getList())) {
+        if (!isPositionValid(stoi(posX), stoi(posY), stoi(posZ), mapList[mapIndex].getList())) {
             cout << "Has an object in its position.Please try again.\n";
         } else {
             break;
@@ -543,7 +580,7 @@ void removeObjectInMap(int mapIndex) {
     mapIndex--;
     mapList[mapIndex].printAllObjects();
 
-    do{
+    do {
         cout << "Select an object (1 - " << mapList[mapIndex].getTotalObj() << "): ";
         cin >> objectIndex;
     } while (objectIndex < 1 || objectIndex > mapList[mapIndex].getTotalObj());
@@ -559,13 +596,12 @@ void removeObjectInMap(int mapIndex) {
 
 
 // Xóa 1 map
-void removeMap(int mapIndex){
+void removeMap(int mapIndex) {
     mapIndex--;
     string folderPath = "model/";
     vector<Object> objList;
     objList = mapList[mapIndex].getList();
-    for (int i = 0; i < objList.size(); i++)
-    {
+    for (int i = 0; i < objList.size(); i++) {
         string fileName = objList[i].getName();
         string fullPath = folderPath + fileName + ".obj";
         remove(fullPath.c_str());
@@ -577,7 +613,7 @@ void removeMap(int mapIndex){
 
 
 void changeMap() {
-    int mapIndex, objectIndex, option,opt;
+    int mapIndex, objectIndex, option, opt;
     bool continues = true;
 
     // Display available maps
@@ -598,10 +634,9 @@ void changeMap() {
         cout << "5.Exit.\n";
         cout << "Enter option: ";
         cin >> opt;
-        if (opt == 1){
+        if (opt == 1) {
             addObjectInMap(mapIndex);
-        }
-        else if (opt == 2) {
+        } else if (opt == 2) {
             // Display objects in the selected map
             mapList[mapIndex - 1].printAllObjects();
 
@@ -638,7 +673,7 @@ void changeMap() {
                 {
                     vector<Object> newObjList;
 
-                    string  newX,newY,newZ;
+                    string newX, newY, newZ;
 
                     newObjList = mapList[mapIndex - 1].getList();
 
@@ -650,8 +685,9 @@ void changeMap() {
                         cout << "Enter the new Z position: ";
                         cin >> newZ;
 
-                        if (!isPositionValid(stoi(newX),stoi(newY),stoi(newZ),newObjList)) {
-                            cout << "Invalid position. Either out of bounds or position is already taken. Please try again.\n";
+                        if (!isPositionValid(stoi(newX), stoi(newY), stoi(newZ), newObjList)) {
+                            cout
+                                    << "Invalid position. Either out of bounds or position is already taken. Please try again.\n";
                         } else {
                             break;
                         }
@@ -710,14 +746,11 @@ void changeMap() {
             mapList[mapIndex - 1].printAnObject(objectIndex - 1);
 
             mapList[mapIndex - 1].printMatrix();
-        }
-        else if (opt == 3) {
+        } else if (opt == 3) {
             removeObjectInMap(mapIndex);
-        }
-        else if (opt == 4) {
+        } else if (opt == 4) {
             removeMap(mapIndex);
-        }
-        else if (opt == 5) {
+        } else if (opt == 5) {
             continues = false;
         }
 
@@ -726,7 +759,7 @@ void changeMap() {
 
 
 //Lưu thông tin thay đổi vào file
-void saveToFile(const string& filename, vector<Map>& mapList) {
+void saveToFile(const string &filename, vector<Map> &mapList) {
     ofstream file;
     file.open("map.txt");
 
@@ -734,7 +767,7 @@ void saveToFile(const string& filename, vector<Map>& mapList) {
         cout << "Cannot open file: " << filename << endl;
         return;
     }
-    for (auto& map : mapList) {
+    for (auto &map: mapList) {
         file << "MAP" << map.getIndex() << "\n";
         vector<Object> objList = map.getList();
 
@@ -802,7 +835,7 @@ int main() {
     readFile("map.txt");
     int choice;
 
-    while (true) {
+    do {
         cout << "MENU\n";
         cout << "0:Print all map.\n";
         cout << "1:Play.\n";
@@ -814,41 +847,32 @@ int main() {
         cout << "Enter choice:";
         cin >> choice;
         cin.ignore();
-        if (choice == 0) {
-            printMap();
+
+        switch (choice) {
+
+            case 0: {
+                printMap();
+            }
+            case 1: {
+                play();
+            }
+            case 2: {
+                findPath();
+            }
+            case 3: {
+                createMap();
+            }
+            case 4: {
+                changeMap();
+            }
+            case 5: {
+                checkValid();
+            }
+            case 6: {
+                cout << "ENDING PROGRAM!" << endl;
+                saveToFile("map.txt", mapList);
+                break;
+            }
         }
-
-        else if (choice == 1)
-        {
-            play();
-        }
-
-
-
-        else if (choice == 2) {
-
-            function2();
-        }
-        else if (choice == 3)
-        {
-            createMap();
-        }
-
-        else if (choice == 4)
-        {
-            changeMap();
-        }
-
-        else if (choice == 5)
-        {
-            checkValid();
-        }
-
-        else if (choice == 6)
-        {
-            cout << "ENDING PROGRAM!" << endl;
-            saveToFile("map.txt",mapList);
-            break;
-        }
-    }
+    } while (choice != 6);
 }
